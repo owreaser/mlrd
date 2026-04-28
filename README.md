@@ -9,3 +9,12 @@ on Windows/MacOS systems. The SSID detection feature is reliant on the `iw`
 command.
 
 mlrd saves your configuration to `~/.local/share/mallard`.
+
+## How to Build mlrd
+
+```bash
+gcc ./src/mlrd.c -o mlrd -O3
+```
+
+If you want to install mlrd, you can move the executable to `/usr/bin/` or
+something. I'm not responsible if something goes wrong when doing this.
