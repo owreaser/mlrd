@@ -19,8 +19,8 @@
 
 static char USAGE[] = "Usage: mlrd [-h | --help] [-V | --version] [--remove-key=name] [-l | --list-hosts] [--list-keys]\n\
        mlrd --register-key <name> <private_key> [<public_key>] [--use-reference]\n\
-       mlrd --register-host <name> <username> <host> [--port=<port>] [--key=<key_name>] [--ssid=<ssid>]\n\
-       mlrd --remove-host=name [--ssid=<ssid>]\n\n";
+       mlrd --register-host <name> <username> <host> [--port=<port>] [--key=<key_name>] [--ssid[=<ssid>]]\n\
+       mlrd --remove-host=name [--ssid[=<ssid>]]\n\n";
 
 const char *VERSION = "mlrd " VERSION_STRING;
 static char doc[] = "Keeps track of your ssh keys and hosts.";
@@ -35,7 +35,7 @@ static struct argp_option ARGUMENTS[] = {
   { "register-host", k_REGISTER_HOST, 0, OPTION_NO_USAGE, "Registers a new ssh-able host with mlrd, or edits an existing one with the same name.", 4 },
   { "port", k_REGISTER_HOST_PORT, "port", OPTION_NO_USAGE, "Specifies the port used for this host. Must be used with --register-host.", 5 },
   { "key", k_REGISTER_HOST_KEY, "key_name", OPTION_NO_USAGE, "Specifies which registered ssh key to use for this host. Must be used with --register-host.", 5 },
-  { "ssid", k_REGISTER_HOST_SSID, "ssid", OPTION_NO_USAGE, "Specifies if an alternate host address should be used for a hostname when on a specific network (case sensitive). Must be used with --register-host or --remove-host.", 5 },
+  { "ssid", k_REGISTER_HOST_SSID, "ssid", OPTION_NO_USAGE | OPTION_ARG_OPTIONAL, "Specifies if an alternate host address should be used for a hostname when on a specific network (case sensitive). Must be used with --register-host or --remove-host.", 5 },
 
   { "remove-key", k_REMOVE_KEY, "name", OPTION_NO_USAGE, "Removes an ssh key registered with mlrd.", 6 },
   { "remove-host", k_REMOVE_HOST, "name", OPTION_NO_USAGE, "Removes a host registered with mlrd. If an SSID is specified with --ssid=..., then only the host configuration corresponding to that SSID will be removed. Otherwise, all configurations for any SSID will be removed.", 6 },
@@ -60,7 +60,6 @@ char *get_ssid() {
   }
 
   FILE *fp;
-  char *path = (char *)malloc(256);
 
   fp = popen("iw dev | grep ssid | sed -n 's/.*ssid //p'", "r");
   if (fp == NULL) {
@@ -68,7 +67,8 @@ char *get_ssid() {
     return NULL;
   }
 
-  char *ssid = fgets(path, 255, fp);
+  char ssid[256];
+  fgets(ssid, 255, fp);
   ssid[strlen(ssid) - 1] = '\0';
   pclose(fp);
 
@@ -262,7 +262,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     case k_REGISTER_HOST: if (arguments->action == DEFAULT) { arguments->action = REGISTER_HOST; } break;
     case k_REGISTER_HOST_PORT: arguments->host_registration_port = clamp_port(atoi(arg)); break;
     case k_REGISTER_HOST_KEY: arguments->host_registration_key_name = arg; break;
-    case k_REGISTER_HOST_SSID: arguments->host_registration_ssid = arg; break;
+    case k_REGISTER_HOST_SSID: if (arg == NULL) { arguments->host_registration_ssid = get_ssid(); } else { arguments->host_registration_ssid = arg; } break;
 
     case k_REMOVE_KEY: if (arguments->action == DEFAULT) { arguments->action = REMOVE_KEY; arguments->name = arg; } break;
     case k_REMOVE_HOST: if (arguments->action == DEFAULT) { arguments->action = REMOVE_HOST; arguments->name = arg; } break;
