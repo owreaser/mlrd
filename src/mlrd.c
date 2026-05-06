@@ -67,7 +67,7 @@ char *get_ssid() {
     return NULL;
   }
 
-  char ssid[256];
+  char *ssid = (char *)malloc(256);
   fgets(ssid, 255, fp);
   ssid[strlen(ssid) - 1] = '\0';
   pclose(fp);
